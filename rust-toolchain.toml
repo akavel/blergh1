@@ -1,0 +1,9 @@
+[toolchain]
+channel = "1.85"
+# components = ["rust-src"]
+profile = "minimal"
+targets = [
+    "thumbv6m-none-eabi",
+]
+
+
