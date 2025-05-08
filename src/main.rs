@@ -4,8 +4,9 @@
 use apache_nimble::controller::NimbleController;
 use apache_nimble::controller::NimbleControllerTask;
 use embassy_time::{Duration, Ticker, Timer};
-use trouble_example_apps::ble_bas_peripheral;
 use panic_probe as _;
+
+mod ble_bas_peripheral;
 
 #[::embassy_executor::task]
 async fn other_task() {
