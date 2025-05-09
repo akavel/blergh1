@@ -7,6 +7,7 @@ use embassy_time::{Duration, Ticker, Timer};
 use {defmt_rtt as _, panic_halt as _};
 
 mod ble_bas_peripheral;
+mod apache_nimble_issue8;
 
 #[::embassy_executor::task]
 async fn other_task() {
