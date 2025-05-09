@@ -35,7 +35,7 @@ struct BatteryService {
 }
 
 /// Run the BLE stack.
-pub async fn run<C>(controller: C)
+pub async fn run<C, const L2CAP_MTU: usize>(controller: C)
 where
     C: Controller,
 {
@@ -44,7 +44,7 @@ where
     let address: Address = Address::random([0xff, 0x8f, 0x1a, 0x05, 0xe4, 0xff]);
     info!("Our address = {:?}", address);
 
-    let mut resources: HostResources<DefaultPacketPool, CONNECTIONS_MAX, L2CAP_CHANNELS_MAX> = HostResources::new();
+    let mut resources: HostResources<CONNECTIONS_MAX, L2CAP_CHANNELS_MAX, L2CAP_MTU> = HostResources::new();
     let stack = trouble_host::new(controller, &mut resources).set_random_address(address);
     let Host {
         mut peripheral, runner, ..
@@ -94,7 +94,7 @@ where
 ///
 /// spawner.must_spawn(ble_task(runner));
 /// ```
-async fn ble_task<C: Controller, P: PacketPool>(mut runner: Runner<'_, C, P>) {
+async fn ble_task<C: Controller>(mut runner: Runner<'_, C>) {
     loop {
         if let Err(e) = runner.run().await {
             #[cfg(feature = "defmt")]
@@ -108,7 +108,7 @@ async fn ble_task<C: Controller, P: PacketPool>(mut runner: Runner<'_, C, P>) {
 ///
 /// This function will handle the GATT events and process them.
 /// This is how we interact with read and write requests.
-async fn gatt_events_task<P: PacketPool>(server: &Server<'_>, conn: &GattConnection<'_, '_, P>) -> Result<(), Error> {
+async fn gatt_events_task(server: &Server<'_>, conn: &GattConnection<'_, '_>) -> Result<(), Error> {
     let level = server.battery_service.level;
     loop {
         match conn.next().await {
@@ -153,11 +153,11 @@ async fn gatt_events_task<P: PacketPool>(server: &Server<'_>, conn: &GattConnect
 /// Create an advertiser to use to connect to a BLE Central, and wait for it to connect.
 async fn advertise<'a, 'b, C: Controller>(
     name: &'a str,
-    peripheral: &mut Peripheral<'a, C, DefaultPacketPool>,
+    peripheral: &mut Peripheral<'a, C>,
     server: &'b Server<'_>,
-) -> Result<GattConnection<'a, 'b, DefaultPacketPool>, BleHostError<C::Error>> {
+) -> Result<GattConnection<'a, 'b>, BleHostError<C::Error>> {
     let mut advertiser_data = [0; 31];
-    let len = AdStructure::encode_slice(
+    AdStructure::encode_slice(
         &[
             AdStructure::Flags(LE_GENERAL_DISCOVERABLE | BR_EDR_NOT_SUPPORTED),
             AdStructure::ServiceUuids16(&[[0x0f, 0x18]]),
@@ -169,7 +169,7 @@ async fn advertise<'a, 'b, C: Controller>(
         .advertise(
             &Default::default(),
             Advertisement::ConnectableScannableUndirected {
-                adv_data: &advertiser_data[..len],
+                adv_data: &advertiser_data[..],
                 scan_data: &[],
             },
         )
@@ -184,11 +184,7 @@ async fn advertise<'a, 'b, C: Controller>(
 /// This task will notify the connected central of a counter value every 2 seconds.
 /// It will also read the RSSI value every 2 seconds.
 /// and will stop when the connection is closed by the central or an error occurs.
-async fn custom_task<C: Controller, P: PacketPool>(
-    server: &Server<'_>,
-    conn: &GattConnection<'_, '_, P>,
-    stack: &Stack<'_, C, P>,
-) {
+async fn custom_task<C: Controller>(server: &Server<'_>, conn: &GattConnection<'_, '_>, stack: &Stack<'_, C>) {
     let mut tick: u8 = 0;
     let level = server.battery_service.level;
     loop {
@@ -208,4 +204,3 @@ async fn custom_task<C: Controller, P: PacketPool>(
         Timer::after_secs(2).await;
     }
 }
-

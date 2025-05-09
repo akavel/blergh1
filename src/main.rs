@@ -39,4 +39,3 @@ async fn main(spawner: embassy_executor::Spawner) {
 async fn run_controller(controller_task: NimbleControllerTask) {
     controller_task.run().await
 }
-
