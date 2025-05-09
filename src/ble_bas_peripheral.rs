@@ -1,3 +1,10 @@
+macro_rules! info {
+    ($s:literal $(, $x:expr)* $(,)?) => { { let _ = ($( & $x ),*); } }
+}
+macro_rules! warn {
+    ($s:literal $(, $x:expr)* $(,)?) => { { let _ = ($( & $x ),*); } }
+}
+
 use embassy_futures::join::join;
 use embassy_futures::select::select;
 use embassy_time::Timer;

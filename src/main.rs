@@ -4,7 +4,7 @@
 use apache_nimble::controller::NimbleController;
 use apache_nimble::controller::NimbleControllerTask;
 use embassy_time::{Duration, Ticker, Timer};
-use panic_probe as _;
+use panic_halt as _;
 
 mod ble_bas_peripheral;
 
