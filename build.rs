@@ -29,8 +29,12 @@ fn main() {
     // `memory.x` is changed.
     println!("cargo:rerun-if-changed=memory.x");
 
-    // println!("cargo:rustc-link-arg-bins=--nmagic");
+    println!("cargo:rustc-link-arg-bins=--nmagic");
     println!("cargo:rustc-link-arg-bins=-Tlink.x");
-    // println!("cargo:rustc-link-arg-bins=-Tdefmt.x");
+    // apache-nimble seems to require defmt
+    println!("cargo:rustc-link-arg-bins=-Tdefmt.x");
+
+    // https://github.com/benbrittain/apache-nimble-sys/issues/8
+    println!("cargo:rustc-link-arg-bins=--allow-multiple-definition");
 }
 
